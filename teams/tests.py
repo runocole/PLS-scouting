@@ -1,6 +1,5 @@
 from django.test import TestCase
 from .models import Team
-from leagues.models import League 
 
 class TeamModelTest(TestCase):
     def setUp(self):
@@ -9,7 +8,7 @@ class TeamModelTest(TestCase):
             name="Manchester United",
             logo="http://logo.com/mu.png",
             color="#FF0000",
-            league=self.league
+            
         )
 
     def test_team_creation(self):

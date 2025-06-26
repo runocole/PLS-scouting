@@ -15,14 +15,16 @@ class AuthenticationTests(APITestCase):
         self.profile_url = reverse('auth-profile')
 
         self.user_data = {
-            "firstName": "Cole",
-            "lastName": "Naomi",
+            "username": "coleuser",
+            "first_name": "Cole",
+            "last_name": "Naomi",
             "email": "cole@example.com",
             "password": "testpassword123",
             "role": "analyst"
         }
 
         self.user = User.objects.create_user(
+            username="coachuser",
             first_name="Coach",
             last_name="User",
             email="coach@example.com",
@@ -43,6 +45,7 @@ class AuthenticationTests(APITestCase):
 
     def test_login_valid_credentials(self):
         User.objects.create_user(
+            username="logintest",
             first_name="Login",
             last_name="Test",
             email="login@example.com",
@@ -50,7 +53,7 @@ class AuthenticationTests(APITestCase):
             role="analyst"
         )
         response = self.client.post(self.login_url, {
-            "email": "login@example.com",
+            "username": "logintest",
             "password": "validpass123"
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -58,7 +61,7 @@ class AuthenticationTests(APITestCase):
 
     def test_login_invalid_credentials(self):
         response = self.client.post(self.login_url, {
-            "email": "fake@example.com",
+            "username": "fakeuser",
             "password": "wrongpass"
         })
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -76,8 +79,8 @@ class AuthenticationTests(APITestCase):
     def test_update_profile(self):
         self.authenticate()
         response = self.client.put(self.profile_url, {
-            "firstName": "Updated",
-            "lastName": "Name",
+            "first_name": "Updated",
+            "last_name": "Name",
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
@@ -86,6 +89,7 @@ class AuthenticationTests(APITestCase):
 
     def test_role_is_returned_in_token(self):
         User.objects.create_user(
+            username="rolecheck",
             first_name="Role",
             last_name="Check",
             email="role@example.com",
@@ -93,8 +97,7 @@ class AuthenticationTests(APITestCase):
             role="analyst"
         )
         response = self.client.post(self.login_url, {
-            "email": "role@example.com",
+            "username": "rolecheck",
             "password": "pass1234"
         })
         self.assertIn("token", response.data)
-        # You can decode and assert role if needed
