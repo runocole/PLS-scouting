@@ -21,5 +21,8 @@ class Report(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        unique_together = ('team', 'author')  # ✅ Ensures only one report per analyst per team
+
     def __str__(self):
         return f"{self.team.name} Report by {self.author.email} ({self.status})"
