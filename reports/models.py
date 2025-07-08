@@ -24,7 +24,7 @@ class Report(models.Model):
 
 
     class Meta:
-        unique_together = ('team', 'author')  
+        unique_together = ('team', 'author', 'is_draft')
 
     def __str__(self):
         return f"{self.team.name} Report by {self.author.email} ({self.status})"

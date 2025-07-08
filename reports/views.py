@@ -14,15 +14,22 @@ class ReportListCreateView(generics.ListCreateAPIView):
             queryset = queryset.filter(author=self.request.user)
         return queryset.order_by('-updated_at')
 
-    def perform_create(self, serializer):
-        # Prevent duplicate draft or duplicate submitted report for the same team by the same analyst
+    def perform_create(self, serializer):  
         team = serializer.validated_data.get('team')
         is_draft = serializer.validated_data.get('is_draft', True)
-        if Report.objects.filter(team=team, author=self.request.user, is_draft=is_draft).exists():
-            raise serializers.ValidationError(
-                "You already have a draft for this team. Please edit your existing draft."
-            )
-        serializer.save(author=self.request.user)
+
+        if is_draft:
+            if Report.objects.filter(team=team, author=self.request.user, is_draft=True).exists():
+                raise serializers.ValidationError(
+                    "You already have a draft for this team. Please edit your existing draft."
+                )
+        else:
+            if Report.objects.filter(team=team, author=self.request.user, is_draft=False).exists():
+                raise serializers.ValidationError(
+                    "You have already submitted a report for this team. Please edit your existing report."
+                )
+
+        serializer.save(author=self.request.user)  
 
 
 class ReportDetailView(generics.RetrieveUpdateDestroyAPIView):

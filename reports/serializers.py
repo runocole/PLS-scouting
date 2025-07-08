@@ -15,7 +15,8 @@ class ReportSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'team', 'team_id', 'team_name', 'team_logo', 'team_color',
             'author', 'author_name', 'status', 'key_players', 'match_stats',
-            'tactical_summary', 'performance_insights', 'created_at', 'updated_at'
+            'tactical_summary', 'performance_insights', 'created_at', 'updated_at',
+            'is_draft'
         ]
         read_only_fields = ['author', 'created_at', 'updated_at']
 
@@ -23,7 +24,13 @@ class ReportSerializer(serializers.ModelSerializer):
         return obj.team.name if obj.team else None
 
     def get_team_logo(self, obj):
-        return obj.team.logo.url if obj.team and obj.team.logo else None
+        request = self.context.get('request')
+        if obj.team and obj.team.logo:
+            logo_url = obj.team.logo.url
+            if request is not None:
+                return request.build_absolute_uri(logo_url)
+            return logo_url
+        return None
 
     def get_team_color(self, obj):
         return obj.team.color if obj.team and obj.team.color else None
