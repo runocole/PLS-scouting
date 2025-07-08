@@ -15,11 +15,15 @@ class ReportListCreateView(generics.ListCreateAPIView):
         return queryset.order_by('-updated_at')
 
     def perform_create(self, serializer):
-        # Prevent duplicate report for the same team by the same analyst
+        # Prevent duplicate draft or duplicate submitted report for the same team by the same analyst
         team = serializer.validated_data.get('team')
-        if Report.objects.filter(team=team, author=self.request.user).exists():
-            raise serializers.ValidationError("You have already created a report for this team.")
+        is_draft = serializer.validated_data.get('is_draft', True)
+        if Report.objects.filter(team=team, author=self.request.user, is_draft=is_draft).exists():
+            raise serializers.ValidationError(
+                "You already have a draft for this team. Please edit your existing draft."
+            )
         serializer.save(author=self.request.user)
+
 
 class ReportDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Report.objects.select_related('team', 'author').all()
@@ -47,3 +51,17 @@ class UpdateReportStatusView(generics.UpdateAPIView):
             report.save()
             return Response(ReportSerializer(report, context={'request': request}).data)
         return Response({'detail': 'Missing status'}, status=status.HTTP_400_BAD_REQUEST)
+
+class MyDraftReportView(generics.RetrieveAPIView):
+    serializer_class = ReportSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Report.objects.filter(author=self.request.user, is_draft=True)
+
+    def get_object(self):
+        team_id = self.kwargs['team_id']
+        try:
+            return self.get_queryset().get(team_id=team_id)
+        except Report.DoesNotExist:
+            raise serializers.ValidationError("No draft report found for this team.")
